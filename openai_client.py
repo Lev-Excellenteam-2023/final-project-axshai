@@ -4,10 +4,9 @@ import openai
 class OpenAiClient:
     MAX_TOKENS = 200
     MODEL = "text-davinci-003"
+
     def __init__(self, api_key):
         openai.api_key = api_key
-        self._max_tokens = 200
-        self._model = "text-davinci-003"
 
     @classmethod
     def _set_prompt(cls, slide_txt):
@@ -30,7 +29,7 @@ class OpenAiClient:
 
     def get_slide_explanation(self, slide_txt):
         response = openai.Completion.create(
-            model=self._model,
+            model=self.MAX_TOKENS,
             prompt=self._set_prompt(slide_txt),
-            max_tokens=self._max_tokens)
+            max_tokens=self.MODEL)
         return response["choices"][0]["text"]
