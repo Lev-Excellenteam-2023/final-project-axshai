@@ -3,7 +3,7 @@ import openai
 
 class OpenAiClient:
     MAX_TOKENS = 200
-    MODEL = "text-davinci-003"
+    MODEL = "gpt-3.5-turbo"
 
     def __init__(self, api_key):
         openai.api_key = api_key
@@ -28,8 +28,8 @@ class OpenAiClient:
         """
 
     def get_slide_explanation(self, slide_txt):
-        response = openai.Completion.create(
-            model=self.MAX_TOKENS,
-            prompt=self._set_prompt(slide_txt),
-            max_tokens=self.MODEL)
-        return response["choices"][0]["text"]
+        response = openai.ChatCompletion.create(
+            model=self.MODEL,
+            messages=[{"role": "user", "content": self._set_prompt(slide_txt)}],
+            max_tokens=self.MAX_TOKENS)
+        return response["choices"][0]["message"]["content"]
