@@ -32,3 +32,11 @@ class PresentationParser(LectureParser):
                 for run in paragraph.runs:
                     text_runs.append(run.text)
         return " ".join(text_runs)
+
+
+def lecture_factory(lecture_type):
+    lecture_type_dict = {
+        "pptx": PresentationParser
+        # "pdf": PdfParser
+    }
+    return lecture_type_dict[lecture_type]
