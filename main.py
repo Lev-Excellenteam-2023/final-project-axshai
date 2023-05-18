@@ -1,4 +1,6 @@
 import argparse
+import os
+from lecture_parser import lecture_factory
 
 
 def _parse_args():
@@ -13,8 +15,12 @@ def _parse_args():
     return parser.parse_args()
 
 
+def _get_lecture_name_and_type(lecture_path: str) -> tuple[str, str]:
+    return tuple(os.path.basename(lecture_path).split("."))
 def main():
     args = _parse_args()
+    lecture_name, lecture_type = _get_lecture_name_and_type(args.lecture_path)
+    lecture_parser = lecture_factory(lecture_type)
 
 
 if __name__ == "__main__":
