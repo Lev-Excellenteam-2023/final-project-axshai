@@ -27,8 +27,8 @@ class OpenAiClient:
         Explanation of the topic following the text in the slide (6 - 7 sentences):
         """
 
-    def get_slide_explanation(self, slide_txt):
-        response = openai.ChatCompletion.create(
+    async def get_slide_explanation(self, slide_txt):
+        response = await openai.ChatCompletion.acreate(
             model=self.MODEL,
             messages=[{"role": "user", "content": self._set_prompt(slide_txt)}],
             max_tokens=self.MAX_TOKENS)

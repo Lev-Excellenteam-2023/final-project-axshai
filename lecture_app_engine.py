@@ -1,5 +1,6 @@
 import json
 import os
+import asyncio
 from dotenv import dotenv_values
 
 import openai_client
@@ -16,28 +17,29 @@ class AppEngine:
         self._destination_path = destination_path if destination_path else os.path.dirname(lecture_path)
 
     def run_app(self):
-        explained_parts = self._explain_lecture()
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        explained_parts = asyncio.run(self._explain_lecture())
         self._save_explained_lecture(explained_parts)
 
-    def _explain_lecture(self):
+    async def _explain_lecture(self):
         explained_lecture_parts = []
         api_key = dotenv_values(self.ENV_FILE_PATH)[self.OPENAI_API_KEY]
         client = openai_client.OpenAiClient(api_key)
 
-        for part in self._parser.get_lecture_parts():
+        async def process_part(index, part):
             try:
                 text_of_lec_part = self._parser.parse_lecture_part(part)
-                if part_explanation:
-                    client.get_slide_explanation(text_of_lec_part)
-                else:
-                    continue
+                if text_of_lec_part:
+                    part_explanation = await client.get_slide_explanation(text_of_lec_part)
+                    explained_lecture_parts.append((index, part_explanation))
             except Exception as e:
                 part_explanation = f"An error occurred during Processing this part: {str(e)}"
-            finally:
-                if part_explanation:
-                    explained_lecture_parts.append(part_explanation)
+                explained_lecture_parts.append((index, part_explanation))
 
-        return explained_lecture_parts
+        lecture_parts = self._parser.get_lecture_parts()
+        await asyncio.gather(*[process_part(index, part) for index, part in enumerate(lecture_parts)])
+        explained_lecture_parts.sort(key=lambda item: item[0])
+        return [item[1] for item in explained_lecture_parts]
 
     def _save_explained_lecture(self, explained_lecture_parts):
         file_path = os.path.join(self._destination_path, self._lecture_name + ".json")
