@@ -12,12 +12,12 @@ class AppEngine:
 
     def __init__(self, lecture_path, destination_path):
         self._lecture_name, lecture_type = self._get_lecture_name_and_type(lecture_path)
-        self._parser = lecture_factory(lecture_type)
+        self._parser = lecture_factory(lecture_type)(lecture_path)
         self._destination_path = destination_path if destination_path else os.path.dirname(lecture_path)
 
     def run_app(self):
-        self._explain_lecture()
-        self._save_explained_lecture()
+        explained_parts = self._explain_lecture()
+        self._save_explained_lecture(explained_parts)
 
     def _explain_lecture(self):
         explained_lecture_parts = []
@@ -27,7 +27,10 @@ class AppEngine:
         for part in self._parser.get_lecture_parts():
             try:
                 text_of_lec_part = self._parser.parse_lecture_part(part)
-                part_explanation = client.get_slide_explanation(text_of_lec_part)
+                if part_explanation:
+                    client.get_slide_explanation(text_of_lec_part)
+                else:
+                    continue
             except Exception as e:
                 part_explanation = f"An error occurred during Processing this part: {str(e)}"
             finally:
