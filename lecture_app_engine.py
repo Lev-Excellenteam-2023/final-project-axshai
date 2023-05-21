@@ -1,10 +1,14 @@
 import json
 import os
 import asyncio
+import sys
+
 from dotenv import dotenv_values
 
 import openai_client
 from lecture_parser import lecture_factory
+
+WINDOWS_PLATFORM = 'win'
 
 
 class AppEngine:
@@ -16,8 +20,11 @@ class AppEngine:
         self._parser = lecture_factory(lecture_type)(lecture_path)
         self._destination_path = destination_path if destination_path else os.path.dirname(lecture_path)
 
+        # see https://stackoverflow.com/questions/63860576/asyncio-event-loop-is-closed-when-using-asyncio-run
+        if sys.platform.startswith(WINDOWS_PLATFORM):
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
     def run_app(self):
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
         explained_parts = asyncio.run(self._explain_lecture())
         self._save_explained_lecture(explained_parts)
 
