@@ -9,7 +9,7 @@ class OpenAiClient:
         openai.api_key = api_key
 
     @classmethod
-    def _set_prompt(cls, slide_txt):
+    def _set_prompt(cls, slide_txt: str) -> str:
         """
         returns a prompt to send to openai based on a given slide tex
         :param slide_txt: the text of the slide
@@ -27,7 +27,7 @@ class OpenAiClient:
         Explanation of the topic following the text in the slide (6 - 7 sentences):
         """
 
-    async def get_slide_explanation(self, slide_txt):
+    async def get_slide_explanation(self, slide_txt: str) -> str:
         response = await openai.ChatCompletion.acreate(
             model=self.MODEL,
             messages=[{"role": "user", "content": self._set_prompt(slide_txt)}],

@@ -2,7 +2,7 @@ from pptx import Presentation, slide
 
 
 class LectureParser:
-    def __init__(self, lecture_path):
+    def __init__(self, lecture_path: str):
         self._lecture = lecture_path
 
     def get_lecture_parts(self):
@@ -26,7 +26,7 @@ class PresentationParser(LectureParser):
         # one for each text run in presentation
         text_runs = []
         for shape in pres_slide.shapes:
-            if not shape.has_text_frame:  # TODO - extract text also from pictures
+            if not shape.has_text_frame:
                 continue
             for paragraph in shape.text_frame.paragraphs:
                 for run in paragraph.runs:
@@ -34,7 +34,7 @@ class PresentationParser(LectureParser):
         return " ".join(text_runs)
 
 
-def lecture_factory(lecture_type):
+def lecture_factory(lecture_type: str) -> type[LectureParser]:
     lecture_type_dict = {
         "pptx": PresentationParser
         # "pdf": PdfParser

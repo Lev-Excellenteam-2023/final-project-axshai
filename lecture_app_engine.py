@@ -11,7 +11,7 @@ class AppEngine:
     ENV_FILE_PATH = ".env"
     OPENAI_API_KEY = "OPENAI_API_KEY"
 
-    def __init__(self, lecture_path, destination_path):
+    def __init__(self, lecture_path: str, destination_path: str):
         self._lecture_name, lecture_type = self._get_lecture_name_and_type(lecture_path)
         self._parser = lecture_factory(lecture_type)(lecture_path)
         self._destination_path = destination_path if destination_path else os.path.dirname(lecture_path)
@@ -26,7 +26,7 @@ class AppEngine:
         api_key = dotenv_values(self.ENV_FILE_PATH)[self.OPENAI_API_KEY]
         client = openai_client.OpenAiClient(api_key)
 
-        async def process_part(index, part):
+        async def process_part(index: int, part):
             try:
                 text_of_lec_part = self._parser.parse_lecture_part(part)
                 if text_of_lec_part:
@@ -38,10 +38,13 @@ class AppEngine:
 
         lecture_parts = self._parser.get_lecture_parts()
         await asyncio.gather(*[process_part(index, part) for index, part in enumerate(lecture_parts)])
+
+        # since we cant know witch slide process done first, we need
+        # to sort the slides according to their original order:
         explained_lecture_parts.sort(key=lambda item: item[0])
         return [item[1] for item in explained_lecture_parts]
 
-    def _save_explained_lecture(self, explained_lecture_parts):
+    def _save_explained_lecture(self, explained_lecture_parts: list[str]):
         file_path = os.path.join(self._destination_path, self._lecture_name + ".json")
         with open(file_path, 'w') as json_file:
             json.dump(explained_lecture_parts, json_file)
