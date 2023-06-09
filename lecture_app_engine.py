@@ -73,8 +73,11 @@ class AppEngine:
         :param explained_lecture_parts: The list of explained lecture parts.
         """
         file_path = os.path.join(self._destination_path, self._lecture_name + ".json")
+        json_to_save = {"lecture name": self._lecture_name,
+                        "number of slides": len(explained_lecture_parts),
+                        "explained slides": explained_lecture_parts}
         with open(file_path, 'w') as json_file:
-            json.dump(explained_lecture_parts, json_file)
+            json.dump(json_to_save, json_file)
 
     @staticmethod
     def _get_lecture_name_and_type(lecture_path: str) -> tuple[str, str]:
