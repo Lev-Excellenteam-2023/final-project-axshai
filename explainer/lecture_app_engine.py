@@ -12,7 +12,7 @@ WINDOWS_PLATFORM = 'win'
 
 
 class AppEngine:
-    ENV_FILE_PATH = ".env"
+    ENV_FILE_NAME = ".env"
     OPENAI_API_KEY = "OPENAI_API_KEY"
 
     def __init__(self, lecture_path: str, destination_path: str):
@@ -26,6 +26,7 @@ class AppEngine:
         self._lecture_name, lecture_type = self._get_lecture_name_and_type(lecture_path)
         self._parser = lecture_factory(lecture_type)(lecture_path)
         self._destination_path = destination_path if destination_path else os.path.dirname(lecture_path)
+        self.env_file_path = os.path.join(os.path.dirname(__file__), self.ENV_FILE_NAME)
 
         # see https://stackoverflow.com/questions/63860576/asyncio-event-loop-is-closed-when-using-asyncio-run
         if sys.platform.startswith(WINDOWS_PLATFORM):
@@ -46,7 +47,7 @@ class AppEngine:
         :return: A list of explanations for each lecture part, sorted by they originally order.
         """
         explained_lecture_parts = []
-        api_key = dotenv_values(self.ENV_FILE_PATH)[self.OPENAI_API_KEY]
+        api_key = dotenv_values(self.env_file_path)[self.OPENAI_API_KEY]
         client = openai_client.OpenAiClient(api_key)
 
         async def process_part(index: int, part):
