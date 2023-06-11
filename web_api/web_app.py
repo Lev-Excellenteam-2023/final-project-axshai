@@ -32,7 +32,7 @@ def upload():
 
     # Get the original filename and timestamp
     original_base_filename, original_file_type = _get_lecture_name_and_type(secure_filename(file.filename))
-    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+    timestamp = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
 
     # Create a new filename combining original filename, timestamp, and UID
     new_filename = f"{original_base_filename}_{timestamp}_{uid}.{original_file_type}"
