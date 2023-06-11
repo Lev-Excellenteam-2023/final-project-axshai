@@ -5,8 +5,8 @@ import sys
 
 from dotenv import dotenv_values
 
-import openai_client
-from lecture_parser import lecture_factory
+import explainer.openai_client as openai_client
+from explainer.lecture_parser import lecture_factory
 
 WINDOWS_PLATFORM = 'win'
 
