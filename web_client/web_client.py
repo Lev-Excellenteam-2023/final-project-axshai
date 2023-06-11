@@ -35,6 +35,7 @@ class WebClient:
         try:
             response = requests.get(f"{self.base_url}/status/{uid}")
             response_json = response.json()
+            print(response_json)
             if response.ok:
                 status = response_json['status']
                 filename = response_json['filename']
@@ -42,7 +43,7 @@ class WebClient:
                 explanation = response_json['explanation']
                 return Status(status, filename, timestamp, explanation)
             else:
-                raise Exception(f"Status request failed: {response_json.get('error')}")
+                raise Exception(f"Status request failed: {response_json.get('status')}")
         except Exception as e:
             raise Exception(f"Status request failed: {str(e)}")
 
