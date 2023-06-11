@@ -4,11 +4,11 @@ import time
 from explainer.explainer_pipe_interface import FileSystemPipe
 
 POLL_INTERVAL = 10
-UPLOADS_DIR = os.path.join(__file__, "..", "uploads")
-OUTPUTS_FOLDER = os.path.join(__file__, "..", "outputs")
+UPLOADS_DIR = os.path.join(__file__, "..", "..", "uploads")
+OUTPUTS_FOLDER = os.path.join(__file__, "..", "..", "outputs")
 
 
-def main():
+def run_explainer():
 
     pipe = FileSystemPipe(UPLOADS_DIR, OUTPUTS_FOLDER)
     while True:
@@ -22,4 +22,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    run_explainer()
