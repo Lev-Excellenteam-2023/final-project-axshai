@@ -5,6 +5,10 @@ from explainer.lecture_app_engine import AppEngine
 
 
 class Pipe:
+
+    def _create(self):
+        raise NotImplementedError
+
     def receive(self):
         raise NotImplementedError
 
@@ -20,6 +24,15 @@ class FileSystemPipe(Pipe):
         self.__front = None
         self._lectures_folder = lectures_folder
         self._destination_folder = destination_folder
+        self._create()
+
+    def _create(self):
+        if not os.path.exists(self._lectures_folder):
+            # Create the directory
+            os.makedirs(self._lectures_folder)
+        if not os.path.exists(self._destination_folder):
+            # Create the directory
+            os.makedirs(self._destination_folder)
 
     def send(self, lecture):
         explainer_engine = AppEngine(lecture, self._destination_folder)
