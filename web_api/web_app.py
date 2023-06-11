@@ -46,8 +46,8 @@ def upload():
 
 def _get_explanation_from_json_file(file_path):
     with open(file_path, 'r') as output_file:
-        explanation = json.load(output_file)["explained slides"]
-        return explanation
+        explanation = json.load(output_file)
+        return explanation["explained slides"]
 
 
 @app.route('/status/<uid>', methods=['GET'])
@@ -60,7 +60,7 @@ def status(uid):
         else:
             req_status = RequestStatus.PENDING
             explanation = None
-        timestamp, _, original_filename = file_name.split('_')[:3]
+        original_filename, timestamp, _ = file_name.split('_')
         return jsonify({
             'status': req_status,
             'filename': original_filename,
