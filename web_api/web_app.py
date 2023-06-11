@@ -7,8 +7,8 @@ import json
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = os.path.join(__file__, "..", "uploads")
-app.config['OUTPUTS_FOLDER'] = os.path.join(__file__, "..", "outputs")
+app.config['UPLOAD_FOLDER'] = os.path.join(__file__, "..", "..", "uploads")
+app.config['OUTPUTS_FOLDER'] = os.path.join(__file__, "..", "..", "outputs")
 
 
 class RequestStatus:
@@ -27,16 +27,15 @@ def upload():
         return jsonify({'error': 'No file provided.'}), 400
 
     file = request.files['file']
-
     # Generate a UID for the uploaded file
     uid = str(uuid.uuid4())
 
     # Get the original filename and timestamp
-    original_filename = secure_filename(file.filename)
+    original_base_filename, original_file_type = _get_lecture_name_and_type(secure_filename(file.filename))
     timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
 
     # Create a new filename combining original filename, timestamp, and UID
-    new_filename = f"{original_filename}_{timestamp}_{uid}"
+    new_filename = f"{original_base_filename}_{timestamp}_{uid}.{original_file_type}"
 
     # Save the file in the uploads folder
     file.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
@@ -53,7 +52,7 @@ def _get_explanation_from_json_file(file_path):
 
 @app.route('/status/<uid>', methods=['GET'])
 def status(uid):
-    folder, file_name = _search_for_uid_in_folders(app.config['UPLOAD_FOLDER'], app.config['OUTPUTS_FOLDER'])
+    folder, file_name = _search_for_uid_in_folders([app.config['UPLOAD_FOLDER'], app.config['OUTPUTS_FOLDER']], uid)
     if file_name:
         if folder == app.config['OUTPUTS_FOLDER']:
             req_status = RequestStatus.DONE
@@ -77,9 +76,20 @@ def _search_for_uid_in_folders(folders_path, uid):
         if os.path.isdir(folder):
             file_list = os.listdir(folder)
             for filename in file_list:
-                if os.path.isfile(filename) and uid in filename:
+                if os.path.isfile(os.path.join(folder, filename)) and uid in filename:
                     return folder, filename
+    return None, None
 
 
-if __name__ == '__main__':
+def _get_lecture_name_and_type(lecture_name: str) -> tuple[str, str]:
+    """
+    Extracts the lecture name and type from the lecture path.
+
+    :param lecture_name: The path to the lecture file.
+    :return: A tuple containing the lecture name and type.
+    """
+    return tuple(os.path.basename(lecture_name).split("."))
+
+
+def run_web_server():
     app.run()
