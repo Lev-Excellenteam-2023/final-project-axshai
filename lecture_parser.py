@@ -58,13 +58,8 @@ class PresentationParser(LectureParser):
         :param pres_slide: The slide to parse.
         :return: The extracted text from the slide.
         """
-        text_runs = []
-        for shape in pres_slide.shapes:
-            if not shape.has_text_frame:
-                continue
-            for paragraph in shape.text_frame.paragraphs:
-                for run in paragraph.runs:
-                    text_runs.append(run.text)
+        text_runs = [' '.join(run.text.split()) for shape in pres_slide.shapes if shape.has_text_frame for paragraph in
+                     shape.text_frame.paragraphs for run in paragraph.runs]
         return " ".join(text_runs)
 
 
