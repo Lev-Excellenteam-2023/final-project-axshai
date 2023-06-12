@@ -40,9 +40,10 @@ class AppEngine:
 
     async def _explain_lecture(self):
         """
-        Processes each lecture part and retrieves explanations using the OpenAI model.
+        Processes each lecture part and retrieves explanations using the OpenAI model, sort the explanations to returns
+        them in they originally order.
 
-        :return: A list of explanations for each lecture part.
+        :return: A list of explanations for each lecture part, sorted by they originally order.
         """
         explained_lecture_parts = []
         api_key = dotenv_values(self.ENV_FILE_PATH)[self.OPENAI_API_KEY]
@@ -61,8 +62,6 @@ class AppEngine:
         lecture_parts = self._parser.get_lecture_parts()
         await asyncio.gather(*[process_part(index, part) for index, part in enumerate(lecture_parts)])
 
-        # since we can't know which slide process is done first, we need
-        # to sort the slides according to their original order:
         explained_lecture_parts.sort(key=lambda item: item[0])
         return [item[1] for item in explained_lecture_parts]
 
