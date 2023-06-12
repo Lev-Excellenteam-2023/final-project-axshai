@@ -19,39 +19,54 @@ class RequestStatus:
 
 @app.route('/upload', methods=['POST'])
 def upload():
+    """
+    Handle file upload.
+
+    This endpoint receives a file in a POST request and saves it in the uploads folder.
+    It returns a JSON object with a unique identifier (UID) for the uploaded file.
+
+    :return: JSON response with the UID of the upload.
+    """
     if not os.path.isdir(app.config['UPLOAD_FOLDER']):
         os.mkdir(app.config['UPLOAD_FOLDER'])
 
-    # Check if a file was sent in the POST request
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided.'}), 400
 
     file = request.files['file']
-    # Generate a UID for the uploaded file
     uid = str(uuid.uuid4())
 
-    # Get the original filename and timestamp
     original_base_filename, original_file_type = _get_lecture_name_and_type(secure_filename(file.filename))
     timestamp = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
 
-    # Create a new filename combining original filename, timestamp, and UID
     new_filename = f"{original_base_filename}_{timestamp}_{uid}.{original_file_type}"
-
-    # Save the file in the uploads folder
     file.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
-
-    # Return a JSON object with the UID of the upload
     return jsonify({'uid': uid})
 
 
-def _get_explanation_from_json_file(file_path):
+def _get_explanation_from_json_file(file_path: str) -> list[str]:
+    """
+    Get the explanation from a JSON file.
+
+    :param file_path: Path to the JSON file.
+    :return: The explanation from the JSON file.
+    """
     with open(file_path, 'r') as output_file:
         explanation = json.load(output_file)
         return explanation["explained slides"]
 
 
 @app.route('/status/<uid>', methods=['GET'])
-def status(uid):
+def status(uid: str):
+    """
+    Get the status of a request by UID.
+
+    This endpoint returns the status of a request by the provided UID.
+    If the request is done, it also returns the explanation.
+
+    :param uid: The unique identifier (UID) of the request.
+    :return: JSON response with the status and explanation (if available).
+    """
     folder, file_name = _search_for_uid_in_folders([app.config['UPLOAD_FOLDER'], app.config['OUTPUTS_FOLDER']], uid)
     if file_name:
         if folder == app.config['OUTPUTS_FOLDER']:
@@ -71,14 +86,21 @@ def status(uid):
         return jsonify({'status': RequestStatus.NOT_FOUND}), 404
 
 
-def _search_for_uid_in_folders(folders_path, uid):
+def _search_for_uid_in_folders(folders_path: list[str], uid: str) -> tuple[str, str]:
+    """
+    Search for a UID in a list of folders.
+
+    :param folders_path: List of folder paths to search.
+    :param uid: The unique identifier (UID) to search for.
+    :return: The folder and file name where the UID is found, or (None, None) if not found.
+    """
     for folder in folders_path:
         if os.path.isdir(folder):
             file_list = os.listdir(folder)
             for filename in file_list:
                 if os.path.isfile(os.path.join(folder, filename)) and uid in filename:
                     return folder, filename
-    return None, None
+    return "", ""
 
 
 def _get_lecture_name_and_type(lecture_name: str) -> tuple[str, str]:
@@ -92,4 +114,10 @@ def _get_lecture_name_and_type(lecture_name: str) -> tuple[str, str]:
 
 
 def run_web_server():
+    """
+    Run the Flask web server.
+
+    This function starts the Flask web server to handle incoming requests.
+
+    """
     app.run()
