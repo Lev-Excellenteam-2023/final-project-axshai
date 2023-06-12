@@ -9,6 +9,12 @@ OUTPUTS_FOLDER = os.path.join(__file__, "..", "..", "outputs")
 
 
 def run_explainer():
+    """
+      Run the explainer process.
+
+      This function continuously checks for lectures in the pipe, explains them,
+      and saves the results in the output directory.
+      """
 
     pipe = FileSystemPipe(UPLOADS_DIR, OUTPUTS_FOLDER)
     while True:
