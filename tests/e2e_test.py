@@ -1,3 +1,4 @@
+import os
 import threading
 import time
 
@@ -15,22 +16,37 @@ def run_test():
     explaining the lecture is done and prints the test result.
     """
 
-    server_thread = threading.Thread(target=web_server.run_web_server)
-    server_thread.start()
+    print("starting web api")
+    start_server()
+
     # Wait for the server to start
     time.sleep(2)
-    explainer_thread = threading.Thread(target=run_explainer)
-    explainer_thread.start()
+    print("starting explainer")
+    start_explainer()
+
     # Wait for the explainer to start
     time.sleep(2)
     web_client = WebClient("http://localhost:5000")
     uid = web_client.upload("asyncio-intro.pptx")
     # Wait for the explainer to finish his lecture processing
+    print("going to sleep to 34 seconds to for the explainer to finish his lecture processing")
     time.sleep(34)
     response = web_client.get_status(uid)
-    assert response.is_done(), "Test Failed!!\n" \
-                               "Something went wrong - the process of explaining the lecture did not finished"
+    assert response.is_done(), f"Test Failed!!\n" \
+                               f"expected status was done, got {response.status}"
     print("Test Passed!!")
+
+
+def start_explainer():
+    explainer_thread = threading.Thread(target=run_explainer)
+    explainer_thread.daemon = True
+    explainer_thread.start()
+
+
+def start_server():
+    server_thread = threading.Thread(target=web_server.run_web_server)
+    server_thread.daemon = True
+    server_thread.start()
 
 
 if __name__ == "__main__":
