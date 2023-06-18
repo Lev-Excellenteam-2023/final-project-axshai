@@ -69,7 +69,6 @@ class WebClient:
         try:
             response = requests.get(f"{self.base_url}/status/{uid}")
             response_json = response.json()
-            print(response_json)
             if response.ok:
                 status = response_json['status']
                 filename = response_json['filename']
