@@ -15,6 +15,7 @@ class RequestStatus:
     DONE = "done"
     PENDING = 'pending'
     NOT_FOUND = "not found"
+    PROCESSING = "Processing"
 
 
 @app.route('/upload', methods=['POST'])
