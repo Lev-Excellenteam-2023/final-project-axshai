@@ -120,7 +120,6 @@ def _get_user_by_email(email, session):
     select_statement = select(User).where(User.email == email)
     result = session.scalars(select_statement).all()
     if result:
-        print("hiii result", result)
         return result[0]
     else:
         return None
