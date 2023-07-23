@@ -77,34 +77,43 @@ def _get_explanation_from_json_file(file_path: str) -> list[str]:
         return explanation["explained slides"]
 
 
-@app.route('/status/<uid>', methods=['GET'])
-def status(uid: str):
+@app.route('/status/<uid_or_filename>', methods=['GET'])
+def status(uid_or_filename: str):
     """
-    Get the status of a request by UID.
+    Get the status of a request by UID or filename with email.
 
-    This endpoint returns the status of a request by the provided UID.
-    If the request is done, it also returns the explanation.
+    This endpoint returns the status of a request by the provided UID or filename with email.
+    If the request is done, it also returns the UID, status, and finish time.
 
-    :param uid: The unique identifier (UID) of the request.
-    :return: JSON response with the status and explanation (if available).
+    :param uid_or_filename: The unique identifier (UID) of the request or the filename with email.
+    :return: JSON response with the UID, status, and finish time (if available).
     """
-    folder, file_name = _search_for_uid_in_folders([app.config['UPLOAD_FOLDER'], app.config['OUTPUTS_FOLDER']], uid)
-    if file_name:
-        if folder == app.config['OUTPUTS_FOLDER']:
-            req_status = RequestStatus.DONE
-            explanation = _get_explanation_from_json_file(os.path.join(folder, file_name))
-        else:
-            req_status = RequestStatus.PENDING
-            explanation = None
-        original_filename, timestamp, _ = file_name.split('_')
-        return jsonify({
-            'status': req_status,
-            'filename': original_filename,
-            'timestamp': timestamp,
-            'explanation': explanation
-        }), 200
+    latest_upload = None
+    if '@' in uid_or_filename:
+        # If the parameter contains '@', it means it's a filename with email
+        filename, email = uid_or_filename.split(' ')
+        with Session(db.get_engine()) as session:
+            user = _get_user_by_email(email, session)
+            if user:
+                latest_upload = _get_user_latest_upload(filename, user)
     else:
-        return jsonify({'status': RequestStatus.NOT_FOUND}), 404
+        # Otherwise, treat it as a UID
+        latest_upload = _get_upload_by_uid(uid_or_filename)
+    if latest_upload:
+        response_code = 200
+        upload_uid = latest_upload.uid
+        response = {'uid': upload_uid,
+                    'status': latest_upload.status,
+                    'upload_time': latest_upload.upload_time.strftime('%Y-%m-%d-%H-%M-%S'),
+                    'filename': latest_upload.filename}
+        if latest_upload.status == RequestStatus.DONE:
+            response['explanation'] = _get_explanation_from_json_file(
+                latest_upload.output_path(base_path=app.config['OUTPUTS_FOLDER']))
+            response['finish_time'] = latest_upload.finish_time.strftime('%Y-%m-%d-%H-%M-%S')
+    else:
+        response = {'status': RequestStatus.NOT_FOUND}
+        response_code = 404
+    return jsonify(response), response_code
 
 
 def _get_user_by_email(email, session):
