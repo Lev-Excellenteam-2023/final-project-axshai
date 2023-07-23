@@ -1,14 +1,18 @@
+import uuid
+from db_interface.tables import User, Upload
+import db_interface.tables as db
 from flask import Flask, request, jsonify
 from datetime import datetime
-import uuid
+
 import os
 import json
 
-from werkzeug.utils import secure_filename
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = os.path.join(__file__, "..", "..", "uploads")
-app.config['OUTPUTS_FOLDER'] = os.path.join(__file__, "..", "..", "outputs")
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), "..", "uploads")
+app.config['OUTPUTS_FOLDER'] = os.path.join(os.path.dirname(__file__), "..", "outputs")
 
 
 class RequestStatus:
@@ -28,6 +32,7 @@ def upload():
 
     :return: JSON response with the UID of the upload.
     """
+    new_filename = None
     if not os.path.isdir(app.config['UPLOAD_FOLDER']):
         os.mkdir(app.config['UPLOAD_FOLDER'])
 
@@ -35,14 +40,29 @@ def upload():
         return jsonify({'error': 'No file provided.'}), 400
 
     file = request.files['file']
-    uid = str(uuid.uuid4())
 
-    original_base_filename, original_file_type = _get_lecture_name_and_type(secure_filename(file.filename))
-    timestamp = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+    uid = uuid.uuid4()
+    email = request.form.get('email')
+    engine = db.get_engine()
+    with Session(engine) as session:
+        f_upload = Upload(uid=uid, filename=os.path.basename(file.filename),
+                          upload_time=datetime.now(), status=RequestStatus.PENDING)
+        new_filename = f_upload.upload_path(app.config['UPLOAD_FOLDER'])
+        session.add(f_upload)
+        session.commit()
 
-    new_filename = f"{original_base_filename}_{timestamp}_{uid}.{original_file_type}"
+        if email:
+            user = get_user_by_email(email, session)
+            if not user:
+                user = User(email=email)
+            user.uploads.append(f_upload)
+            f_upload.user = user
+            f_upload.user_id = user.id
+            session.add_all([user, f_upload])
+            session.commit()
+
     file.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
-    return jsonify({'uid': uid})
+    return jsonify({'uid': str(uid)})
 
 
 def _get_explanation_from_json_file(file_path: str) -> list[str]:
