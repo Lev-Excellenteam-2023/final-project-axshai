@@ -2,22 +2,28 @@ import os
 import uuid
 from datetime import datetime
 from typing import List
-from sqlalchemy import ForeignKey, create_engine
+from sqlalchemy import ForeignKey
 from sqlalchemy import String
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
-from sqlalchemy.orm import Session
 
 from db_interface import engine
 
 
 class Base(DeclarativeBase):
+    """Base class for SQLAlchemy models."""
     pass
 
 
 class User(Base):
+    """Represents a User entity in the database.
+
+     :param id: The primary key of the user (auto incremented).
+     :param email: The email address of the user (unique and non-nullable).
+     :param uploads: A list of Upload objects associated with this user.
+     """
     __tablename__ = "User"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     email: Mapped[str] = mapped_column(unique=True, nullable=False)
@@ -28,6 +34,18 @@ class User(Base):
 
 
 class Upload(Base):
+    """Represents an Upload entity in the database.
+
+       :param id: The primary key of the upload (auto incremented).
+       :param uid: The UUID of the upload (generated automatically and unique).
+       :param filename: The name of the uploaded file (non-nullable).
+       :param upload_time: The time when the file was uploaded (non-nullable).
+       :param finish_time: The time when the explanation process is finished (nullable).
+       :param status: The status of the upload.
+       :param user_id: The foreign key referencing the User entity (nullable).
+       :param user: The User object associated with this upload.
+       :return: None
+       """
     __tablename__ = "Upload"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     uid: Mapped[uuid.UUID] = mapped_column(default=uuid.uuid4, unique=True, nullable=False)
@@ -43,15 +61,27 @@ class Upload(Base):
                f"upload_time={self.upload_time!r}), status={self.status!r}), user_id={self.user_id!r})"
 
     def upload_path(self, base_path="."):
-        """Computes the path of the uploaded file based on metadata in the DB."""
+        """Computes the path of the uploaded file based on metadata in the DB.
+
+        :param base_path: The base directory where the file will be stored. Default is the current directory.
+        :return: The computed path for the uploaded file.
+        """
         return os.path.join(base_path, f"{self.uid}.{self.filename.split('.')[-1]}")
 
     def output_path(self, base_path="."):
-        """Computes the path of the explained uploaded file based on metadata in the DB."""
+        """Computes the path of the explained uploaded file based on metadata in the DB.
+
+        :param base_path: The base directory where the file will be stored. Default is the current directory.
+        :return: The computed path for the explained uploaded file.
+        """
         return os.path.join(base_path, f"{self.uid}.{'json'}")
 
 
 # Base.metadata.create_all(engine)
 
 def get_engine():
+    """Get the SQLAlchemy engine.
+
+    :return: The SQLAlchemy engine.
+    """
     return engine
