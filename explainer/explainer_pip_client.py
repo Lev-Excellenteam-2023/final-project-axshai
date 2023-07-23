@@ -1,11 +1,11 @@
 import os
 import time
 
-from explainer.explainer_pipe_interface import FileSystemPipe
+from explainer.explainer_pipe_interface import DataBasePipe
 
 POLL_INTERVAL = 10
-UPLOADS_DIR = os.path.join(__file__, "..", "..", "uploads")
-OUTPUTS_FOLDER = os.path.join(__file__, "..", "..", "outputs")
+UPLOADS_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads")
+OUTPUTS_FOLDER = os.path.join(os.path.dirname(__file__), "..", "outputs")
 
 
 def run_explainer():
@@ -16,7 +16,7 @@ def run_explainer():
       and saves the results in the output directory.
       """
 
-    pipe = FileSystemPipe(UPLOADS_DIR, OUTPUTS_FOLDER)
+    pipe = DataBasePipe(UPLOADS_DIR, OUTPUTS_FOLDER)
     while True:
         while pipe.receive():
             lecture_to_explain = pipe.receive()
