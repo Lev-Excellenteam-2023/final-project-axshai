@@ -3,6 +3,8 @@ from dataclasses import dataclass
 import requests
 from datetime import datetime
 
+from web_api.web_app import RequestStatus
+
 
 @dataclass
 class Status:
@@ -39,17 +41,20 @@ class WebClient:
         """
         self.base_url = base_url
 
-    def upload(self, file_path: str) -> str:
+    def upload(self, file_path: str, email: str = None) -> str:
         """
         Upload a file to the web server.
 
+        :param email: (Optional) The email address to associate with the upload.
         :param file_path: The path to the file to upload.
         :return: The UID of the uploaded file.
         :raises Exception: If the upload fails.
         """
         try:
             with open(file_path, 'rb') as file:
-                response = requests.post(f"{self.base_url}/upload", files={'file': file})
+                files = {'file': file}
+                data = {"email": email} if email else None
+                response = requests.post(f"{self.base_url}/upload", files=files, data=data)
                 response_json = response.json()
                 if response.ok:
                     return response_json['uid']
