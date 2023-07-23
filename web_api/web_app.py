@@ -1,4 +1,6 @@
 import uuid
+from typing import Union
+
 from db_interface.tables import User, Upload
 import db_interface.tables as db
 from flask import Flask, request, jsonify
@@ -116,7 +118,14 @@ def status(uid_or_filename: str):
     return jsonify(response), response_code
 
 
-def _get_user_by_email(email, session):
+def _get_user_by_email(email, session: Session) -> Union[User, None]:
+    """
+    Retrieves a user by their email address.
+
+    :param email: The email address of the user to be retrieved.
+    :param session: The SQLAlchemy session object.
+    :return: User or None - The User object if found, or None if the user does not exist.
+    """
     select_statement = select(User).where(User.email == email)
     result = session.scalars(select_statement).all()
     if result:
@@ -125,13 +134,26 @@ def _get_user_by_email(email, session):
         return None
 
 
-def _get_user_latest_upload(filename, user: User):
+def _get_user_latest_upload(filename: str, user) -> Upload:
+    """
+    Retrieves the latest upload for a specific user and filename.
+
+    :param filename: The name of the uploaded file.
+    :param user: The User object for which the latest upload needs to be found.
+    :return: Upload - The latest Upload object for the given filename and user.
+    """
     latest_time = max([user_upload.upload_time for user_upload in user.uploads if user_upload.filename == filename])
     return [user_upload for user_upload in user.uploads if user_upload.filename == filename and
             user_upload.upload_time == latest_time][0]
 
 
-def _get_upload_by_uid(str_uid) -> Upload:
+def _get_upload_by_uid(str_uid: str) -> Upload:
+    """
+    Retrieves an upload by its UUID.
+
+    :param str_uid: The UUID of the upload in string format.
+    :return: Upload - The Upload object with the given UUID.
+    """
     uid = uuid.UUID(str_uid)
     with Session(db.get_engine()) as session:
         select_statement = select(Upload).where(Upload.uid == uid)
