@@ -52,7 +52,7 @@ def upload():
         session.commit()
 
         if email:
-            user = get_user_by_email(email, session)
+            user = _get_user_by_email(email, session)
             if not user:
                 user = User(email=email)
             user.uploads.append(f_upload)
@@ -107,31 +107,27 @@ def status(uid: str):
         return jsonify({'status': RequestStatus.NOT_FOUND}), 404
 
 
-def _search_for_uid_in_folders(folders_path: list[str], uid: str) -> tuple[str, str]:
-    """
-    Search for a UID in a list of folders.
-
-    :param folders_path: List of folder paths to search.
-    :param uid: The unique identifier (UID) to search for.
-    :return: The folder and file name where the UID is found, or (None, None) if not found.
-    """
-    for folder in folders_path:
-        if os.path.isdir(folder):
-            file_list = os.listdir(folder)
-            for filename in file_list:
-                if os.path.isfile(os.path.join(folder, filename)) and uid in filename:
-                    return folder, filename
-    return "", ""
+def _get_user_by_email(email, session):
+    select_statement = select(User).where(User.email == email)
+    result = session.scalars(select_statement).all()
+    if result:
+        print("hiii result", result)
+        return result[0]
+    else:
+        return None
 
 
-def _get_lecture_name_and_type(lecture_name: str) -> tuple[str, str]:
-    """
-    Extracts the lecture name and type from the lecture path.
+def _get_user_latest_upload(filename, user: User):
+    latest_time = max([user_upload.upload_time for user_upload in user.uploads if user_upload.filename == filename])
+    return [user_upload for user_upload in user.uploads if user_upload.filename == filename and
+            user_upload.upload_time == latest_time][0]
 
-    :param lecture_name: The path to the lecture file.
-    :return: A tuple containing the lecture name and type.
-    """
-    return tuple(os.path.basename(lecture_name).split("."))
+
+def _get_upload_by_uid(str_uid) -> Upload:
+    uid = uuid.UUID(str_uid)
+    with Session(db.get_engine()) as session:
+        select_statement = select(Upload).where(Upload.uid == uid)
+        return session.scalars(select_statement).all()[0]
 
 
 def run_web_server():
