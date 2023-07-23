@@ -63,24 +63,34 @@ class WebClient:
         except Exception as e:
             raise Exception(f"Upload failed: {str(e)}")
 
-    def get_status(self, uid: str) -> Status:
+    def get_status(self, uid: str = None, email: str = None, filename: str = None) -> Status:
         """
-        Get the status of a request by UID.
+        Get the status of a request by UID or by email and a filename.
 
+        :param filename: The name of the file uploaded.
+        :param email: The email address used during the upload.
         :param uid: The unique identifier (UID) of the request.
         :return: Status Object representing the status of the request.
         :raises Exception: If the status request fails.
         """
         try:
-            response = requests.get(f"{self.base_url}/status/{uid}")
+            if uid:
+                upload_identified = uid
+            elif email and filename:
+                upload_identified = f"{filename} {email}"
+            else:
+                raise Exception(f"Status request failed: no upload identified provided")
+            response = requests.get(f"{self.base_url}/status/{upload_identified}")
             response_json = response.json()
             if response.ok:
                 status = response_json['status']
                 filename = response_json['filename']
-                timestamp = response_json['timestamp']
-                explanation = response_json['explanation']
+                timestamp = response_json['upload_time']
+                explanation = []
+                if response_json['status'] == RequestStatus.DONE:
+                    explanation = response_json['explanation']
                 return Status(status, filename, timestamp, explanation)
             else:
-                raise Exception(f"Status request failed: {response_json.get('status')}")
+                raise Exception(f"Status request failed")
         except Exception as e:
             raise Exception(f"Status request failed: {str(e)}")
