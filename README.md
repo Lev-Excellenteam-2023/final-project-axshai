@@ -1,5 +1,4 @@
-# The GPT-Explainer Project
-
+# The GPT-Explainer Project - part1
 ## Introduction
 
 Learning Software Development is hard. Especially when you can't understand the lecturer's presentations. Wouldn't it be nice to have someone explain them for you?
