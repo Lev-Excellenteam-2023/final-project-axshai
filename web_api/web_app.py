@@ -6,6 +6,8 @@ import json
 
 from werkzeug.utils import secure_filename
 
+from web_api.web_helpers import _get_explanation_from_json_file
+
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = os.path.join(__file__, "..", "..", "uploads")
 app.config['OUTPUTS_FOLDER'] = os.path.join(__file__, "..", "..", "outputs")
@@ -42,18 +44,6 @@ def upload():
     new_filename = f"{original_base_filename}_{timestamp}_{uid}.{original_file_type}"
     file.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
     return jsonify({'uid': uid})
-
-
-def _get_explanation_from_json_file(file_path: str) -> list[str]:
-    """
-    Get the explanation from a JSON file.
-
-    :param file_path: Path to the JSON file.
-    :return: The explanation from the JSON file.
-    """
-    with open(file_path, 'r') as output_file:
-        explanation = json.load(output_file)
-        return explanation["explained slides"]
 
 
 @app.route('/status/<uid>', methods=['GET'])
