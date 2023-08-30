@@ -1,3 +1,4 @@
+import re
 import uuid
 from typing import Union
 
@@ -91,31 +92,42 @@ def status(uid_or_filename: str):
     :return: JSON response with the UID, status, and finish time (if available).
     """
     latest_upload = None
-    if '@' in uid_or_filename:
-        # If the parameter contains '@', it means it's a filename with email
-        filename, email = uid_or_filename.split(' ')
-        with Session(db.get_engine()) as session:
-            user = _get_user_by_email(email, session)
-            if user:
-                latest_upload = _get_user_latest_upload(filename, user)
+    if re.search(r'@', uid_or_filename):
+        latest_upload = _get_upload_by_email(latest_upload, uid_or_filename)
     else:
         # Otherwise, treat it as a UID
         latest_upload = _get_upload_by_uid(uid_or_filename)
+
     if latest_upload:
-        response_code = 200
-        upload_uid = latest_upload.uid
-        response = {'uid': upload_uid,
-                    'status': latest_upload.status,
-                    'upload_time': latest_upload.upload_time.strftime('%Y-%m-%d-%H-%M-%S'),
-                    'filename': latest_upload.filename}
-        if latest_upload.status == RequestStatus.DONE:
-            response['explanation'] = _get_explanation_from_json_file(
-                latest_upload.output_path(base_path=app.config['OUTPUTS_FOLDER']))
-            response['finish_time'] = latest_upload.finish_time.strftime('%Y-%m-%d-%H-%M-%S')
+        response, response_code = _build_response(latest_upload)
     else:
         response = {'status': RequestStatus.NOT_FOUND}
         response_code = 404
     return jsonify(response), response_code
+
+
+def _build_response(latest_upload):
+    response_code = 200
+    upload_uid = latest_upload.uid
+    response = {'uid': upload_uid,
+                'status': latest_upload.status,
+                'upload_time': latest_upload.upload_time.strftime('%Y-%m-%d-%H-%M-%S'),
+                'filename': latest_upload.filename}
+    if latest_upload.status == RequestStatus.DONE:
+        response['explanation'] = _get_explanation_from_json_file(
+            latest_upload.output_path(base_path=app.config['OUTPUTS_FOLDER']))
+        response['finish_time'] = latest_upload.finish_time.strftime('%Y-%m-%d-%H-%M-%S')
+    return response, response_code
+
+
+def _get_upload_by_email(latest_upload, uid_or_filename):
+    # If the parameter contains '@', it means it's a filename with email
+    filename, email = uid_or_filename.split(' ')
+    with Session(db.get_engine()) as session:
+        user = _get_user_by_email(email, session)
+        if user:
+            latest_upload = _get_user_latest_upload(filename, user)
+    return latest_upload
 
 
 def _get_user_by_email(email, session: Session) -> Union[User, None]:
